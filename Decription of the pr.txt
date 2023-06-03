@@ -1,0 +1,5 @@
+this is a web app that allows you to look for a place to go and do something based on your wants,needs, mood etc.
+
+Basically it will ask you the questions and then provide you with the places to go in your location
+
+Everyone will find something suitable
