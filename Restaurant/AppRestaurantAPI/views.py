@@ -103,9 +103,13 @@ class CartView(generics.ListCreateAPIView):
     serializer_class = CartSerializer
     permission_classes = [IsAuthenticated]
 
+    #By default LisrCreateAPIView will display all the items situated at the Cart model, we use the func below to specify conditions for GET method.. 
+    #..which items to display In this case we get all the items and filter them by the specific User currently accessing the Cart API
+    #We still use the 'queryset' variable at the beggining cuz it's mandatory for the ListCreateAPIView method
     def get_queryset(self):
         return Cart.objects.all().filter(user=self.request.user)
 
+    #This func enables to perform the DELETE request which will delete all the items filtered to a specific user currently using the Cart API
     def delete(self, request, *args, **kwargs):
         Cart.objects.all().filter(user=self.request.user).delete()
         return Response("ok")
@@ -126,32 +130,48 @@ class OrderView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+
+        #Below we check if the user is admin (superuser) and then perform the action of displaying all items in the Orders
         if self.request.user.is_superuser:
             return Order.objects.all()
-        elif self.request.user.groups.count()==0: #normal customer - no group
+        elif self.request.user.groups.count()==0: #normal customer doesn't below to the group therefore has count of 0 accroding to the biult in..
+            #..Groups model, then we return the items specific to that user
             return Order.objects.all().filter(user=self.request.user)
-        elif self.request.user.groups.filter(name='Delivery Crew').exists(): #delivery crew
-            return Order.objects.all().filter(delivery_crew=self.request.user)  #only show oreders assigned to him
+        elif self.request.user.groups.filter(name='Delivery Crew').exists(): #Filterin the users belonging only to the group "Delivery Crew"
+            return Order.objects.all().filter(delivery_crew=self.request.user)  #only show oreders assigned to a specific delivery crew member
         else: #delivery crew or manager
-            return Order.objects.all()
-        # else:
-        #     return Order.objects.all()
+            return Order.objects.all() #If a user accesig belongs to another group other than 0, delivery crew
 
+    #Func that specifies the conditions for the create method. It is used to create and order from the items stored in a user's cart.
+    # 1)  if the objects in the Cart belonging to a specific user =0 then we display a message "no items in cart"
     def create(self, request, *args, **kwargs):
         menuitem_count = Cart.objects.all().filter(user=self.request.user).count()
         if menuitem_count == 0:
             return Response({"message:": "no item in cart"})
 
+
+        #2) A copy of the data passed to POST request is assigned to the variable data for possible manipulation of data to modify fields below.
+
+        # For example, if a developer wants to add some additional parameters to the request data dictionary..
+        # ..they can make a shallow copy of the dictionary and add the additional parameters to the copy, instead of adding the parameter..
+        # ..directly to the original dictionary. This ensures that the original request data dictionary remains unchanged.
         data = request.data.copy()
+        #3) The total price of the items in the user's cart is calculated using get_total_price func below and stored in the total variable.
         total = self.get_total_price(self.request.user)
+        #4) The calculated total is added to the data as a key-value pair. This becomes our value at OrderSerializer for the field "total"
         data['total'] = total
+        #5) The user ID associated with the request is added to the data as a key-value pair.This becomes our value at OrderSerializer for the field "user"
         data['user'] = self.request.user.id
-        order_serializer = OrderSerializer(data=data)
+        #6) The data is then passed to the OrderSerializer to be validated.
+        order_serializer = OrderSerializer(data=data)#in brackets here first "data" is mandatory and always has that name, second is our variable..
+        #..which we defined above and could use another name
+
+        #7) If the data is valid, the fields get a value assigned from the data we have designed above and then it gets saved.
         if (order_serializer.is_valid()):
             order = order_serializer.save()
-
+            #8) The items in the user's cart are retrieved belonging to a user who made a request
             items = Cart.objects.all().filter(user=self.request.user).all()
-
+            #9) For each item in the cart, an OrderItem is created and saved referrign to the menuitem_id, price and quantity
             for item in items.values():
                 orderitem = OrderItem(
                     order=order,
@@ -160,13 +180,18 @@ class OrderView(generics.ListCreateAPIView):
                     quantity=item['quantity'],
                 )
                 orderitem.save()
-
-            Cart.objects.all().filter(user=self.request.user).delete() #Delete cart items
-
+            # 10) after the number 9 all the items belongign to a user in his Cart get deleted
+            Cart.objects.all().filter(user=self.request.user).delete()
+            # 11) A copy of the order serializer data is stored in the result variable to manipulate the total data below
             result = order_serializer.data.copy()
+            # 12) The calculated total is added to the result as a key-value pair.
             result['total'] = total
+            # 13) Returns the data we get as the result at order_serializer
             return Response(order_serializer.data)
 
+
+
+    # The func that calculates the total field
     def get_total_price(self, user):
         total = 0
         items = Cart.objects.all().filter(user=user).all()
@@ -191,6 +216,7 @@ class SingleOrderView(generics.RetrieveUpdateAPIView):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
 
+    #specifying the conditions for the update (put / patch method)
     def update(self, request, *args, **kwargs):
         if self.request.user.groups.count()==0: # Normal user, not belonging to any group = Customer
             return Response('Not Ok')
@@ -210,7 +236,10 @@ class SingleOrderView(generics.RetrieveUpdateAPIView):
 
 
 
+#thIS class is to modify users belonging to managers' group
 class GroupViewSet(viewsets.ViewSet):
+    # Using the viewsets we need to specify the action for used HTTP requests. For that we use def LIST (GET), def create (POST),def destroy (DELETE)
+    #.. The names of the functions are always the same for any viewset
     permission_classes = [IsAdminUser]
     def list(self, request):
         users = User.objects.all().filter(groups__name='Manager')

@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     #adding a rest framework to the installed apps is required
     'rest_framework',
+    #to enable token creation
+    'rest_framework.authtoken',
     #adding an app name is required to make the project use it
     'AppRestaurantAPI',
     #adding a djoser authentication library to the installed apps to make use of its auth endpoints
@@ -160,8 +162,8 @@ REST_FRAMEWORK = {
 
 #Addin a Djoser section to our settings.py to use and customize
 DJOSER = {
-    #setting a login field as email (another option is username or phone number)
-    "LOGIN_FIELD" : "email",
+    #setting a login field as email (another option is email or phone number)
+    "LOGIN_FIELD" : "username",
     #setting a primary key of User table to an email of a user
     "USER_ID_FIELD" : "email"
 
