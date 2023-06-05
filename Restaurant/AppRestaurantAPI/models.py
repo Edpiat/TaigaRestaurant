@@ -1,5 +1,7 @@
 from django.db import models
 
+from rest_framework.validators import UniqueValidator
+
 #Importing the USER model that is built in the django at contrib.auth and contains info about users
 from django.contrib.auth.models import User
 
@@ -12,16 +14,42 @@ class Category(models.Model):
         return self.title
     #The max_length defines max allowed characters for that field, db_index =TRUE sets an index for a column to easily search and filter records
     title = models.CharField(max_length=255, db_index=True)
+    #The class below sets the unique values for the listed fields so that they can't double
+    class Meta:
+        unique_together = ('title', 'slug')
+
+
+
+
+
+
+
+
+
+
+
 
 #Creating a model for the Menuitem after which comes the fields with formats and params, ID fields is set by default so no need to specify it
 class MenuItem(models.Model):
-    title = models.CharField(max_length=255, db_index=True)
+    title = models.CharField(max_length=255, db_index=True, unique=True)
     price = models.DecimalField(max_digits=6, decimal_places=2, db_index=True)
     featured = models.BooleanField(db_index=True)
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
 
     def __str__(self):
         return self.title
+
+
+
+
+
+
+
+
+
+
+
+
 
 #Creating a model for the Cart after which comes the fields with formats and params, ID fields is set by default so no need to specify it
 class Cart(models.Model):
@@ -51,5 +79,6 @@ class OrderItem(models.Model):
     quantity = models.SmallIntegerField()
     price = models.DecimalField(max_digits=6, decimal_places=2)
 
+#The class below sets the unique values for the listed fields so that they can't double
     class Meta:
         unique_together = ('order', 'menuitem')

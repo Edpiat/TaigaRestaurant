@@ -19,7 +19,7 @@ from .serializers import CategorySerializer, MenuItemSerializer, CartSerializer,
 from rest_framework.response import Response
 
 # The line below imports the IsAdminUser permission which checks if the user accessing the func is an Admin
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, BasePermission
 
 # The line below import the method used to return an object or if the objects doesn't exist return thr 404 error
 from django.shortcuts import  get_object_or_404
@@ -31,7 +31,15 @@ from django.contrib.auth.models import Group, User
 from rest_framework import viewsets
 
 # Imports the status method which is able to return an HTTP result status e.g. status.HTTP_403_Forbidden or status.HTTP_404_NOTFOUND
-from rest_framework import status
+from rest_framework import status, permissions
+
+
+#The class below is a custom permission method that I've created that checks of the user belongs to superuser or to a manager group..
+#..if so the return of the function will be TRUE which will allow actions
+#The class is used at get_permissions func at any view
+class IsManagerOrSuper(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_superuser or request.user.groups.filter(name='Manager').exists()
 
 
 
@@ -43,12 +51,21 @@ class CategoriesView(generics.ListCreateAPIView):
     def get_permissions(self):
         permission_classes = []
         if self.request.method != 'GET':
-            permission_classes = [IsAuthenticated]
+            permission_classes = [IsManagerOrSuper]
 
         return [permission() for permission in permission_classes]
 
 
+class SingleCategoryView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
 
+    def get_permissions(self):
+        permission_classes = []
+        if self.request.method != 'GET':
+            permission_classes = [IsManagerOrSuper]
+
+        return [permission() for permission in permission_classes]
 
 
 
@@ -57,7 +74,9 @@ class CategoriesView(generics.ListCreateAPIView):
 class MenuItemsView(generics.ListCreateAPIView):
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
+    #The line below allows us a search for items by title of the category
     search_fields = ['category__title']
+    #The line below allows us ordering by either price or inventory (if we remove that, that ordering will be performed across all fields of Model)
     ordering_fields = ['price', 'inventory']
 
 
@@ -67,10 +86,11 @@ class MenuItemsView(generics.ListCreateAPIView):
         permission_classes = []
         #below line is to check if the request method is not equal to 'GET'
         if self.request.method != 'GET':
-            #the line below acts If the request method is not 'GET', then it adds the IsAuthenticated permission class to the list.
-            permission_classes = [IsAuthenticated]
+            #the line below acts If the request method is not 'GET', then it adds the IsManagerOrSuper permission class to the list.
+            permission_classes = [IsManagerOrSuper]
         #below line returns a list of permission classes that are needed based on the request method.
         #It does this by looping through the permission_classes list and creating an instance of each permission class.
+        #Without it, the function won't work
         return [permission() for permission in permission_classes]
 
 
@@ -87,7 +107,7 @@ class SingleMenuItemView(generics.RetrieveUpdateDestroyAPIView):
     def get_permissions(self):
         permission_classes = []
         if self.request.method != 'GET':
-            permission_classes = [IsAuthenticated]
+            permission_classes = [IsManagerOrSuper]
 
         return [permission() for permission in permission_classes]
 
@@ -129,9 +149,11 @@ class OrderView(generics.ListCreateAPIView):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
 
+    #The func below is used to specify queryset we get with conditions depending on the code inside the func
     def get_queryset(self):
 
-        #Below we check if the user is admin (superuser) and then perform the action of displaying all items in the Orders
+        #Below we set specific conditions to the queryset, check if the user is admin (superuser) and then perform the action of displaying..
+        #..all items in the Orders
         if self.request.user.is_superuser:
             return Order.objects.all()
         elif self.request.user.groups.count()==0: #normal customer doesn't below to the group therefore has count of 0 accroding to the biult in..

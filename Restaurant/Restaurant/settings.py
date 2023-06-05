@@ -142,7 +142,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     #Below defines the filter methods available to us to use
     'DEFAULT_FILTER_BACKENDS': [
+        #to enable ordering items across all the API urls(can specify exact fields at views.py, in any class by creating a variable..
+        #.."ordering_fields" = ['name_of_the_field1', 'name_of_the_field2'])
         'rest_framework.filters.OrderingFilter',
+        #to enable search of the item (implementing at views.py, in any class by creating a variable "search_fields" = ['name_of_the_field'])
         'rest_framework.filters.SearchFilter',
     ],
 
@@ -156,7 +159,7 @@ REST_FRAMEWORK = {
     #below is the pagination class that allows us to present limited info per page,e.g. when we wanna see only 2 records per page out of 1000
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     #defines how many records are displayed per page
-    'PAGE_SIZE': 2
+    'PAGE_SIZE': 4
 }
 
 
