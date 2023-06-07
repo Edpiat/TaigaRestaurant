@@ -1,3 +1,5 @@
+from django.shortcuts import render
+
 
 #importing generics which help our classes to perform HTTP methods like GET, POST, PUT, PATCH
 from rest_framework import generics
@@ -322,3 +324,13 @@ class DeliveryCrewViewSet(viewsets.ViewSet):
         dc = Group.objects.get(name="Delivery Crew")
         dc.user_set.remove(user)
         return Response({"message": "user removed from the delivery crew group"}, 200)
+
+
+
+
+#----------------------------------------------------------------------------HTML rendering
+
+
+
+def index(request):
+    return render(request, 'index.html')

@@ -132,6 +132,19 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+
+
+
+#Your project will probably also have static assets that aren’t tied to a particular app.
+#In addition to using a static/ directory inside your apps, you can define a list of directories (STATICFILES_DIRS) in your settings file
+# where Django will also look for static files.
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static"
+]
+
+
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 

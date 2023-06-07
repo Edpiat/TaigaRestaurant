@@ -3,7 +3,7 @@ from . import views
 
 urlpatterns = [
     #This is how we map class based views to the URLS, the difference with the function based views is that here we add ".as_view()" at the end
-    
+
     #The below path leads us to the categories our restaurant has
     path('categories', views.CategoriesView.as_view()),
     #The path below let's us see and modify the exact category referring to its ID
@@ -27,5 +27,22 @@ urlpatterns = [
         {'get': 'list', 'post': 'create', 'delete': 'destroy'})),
 
     path('groups/delivery-crew/users', views.DeliveryCrewViewSet.as_view(
-        {'get': 'list', 'post': 'create', 'delete': 'destroy'}))
+        {'get': 'list', 'post': 'create', 'delete': 'destroy'})),
+    
+    path('',views.index, name="index"),
+
+
+
+
+
+
 ]
+
+
+
+
+
+
+
+#--------------------------------------------------------------HTML paths
+
